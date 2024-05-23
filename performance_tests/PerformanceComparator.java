@@ -29,22 +29,27 @@ public class PerformanceComparator {
 
     // Nuevo método
     public static String getCharTypeInfoNew(String word) {
-        if (DIGITS_ONLY.matcher(word).matches()) {
-            return "0";
-        }
-
         PrimitiveIterator.OfInt iterator = word.chars().iterator();
 
         boolean firstIsLowerCase = Character.isLowerCase(iterator.nextInt());
         boolean restIsLowerCase = true;
         boolean hasALowerCase = firstIsLowerCase;
+        boolean isAlpha = false;
 
         while (iterator.hasNext()) {
-            if (Character.isUpperCase(iterator.nextInt())) {
-                restIsLowerCase = false;
-            } else {
-                hasALowerCase = true;
+            int currentChar = iterator.nextInt();
+            if (!Character.isDigit(currentChar)) {
+                isAlpha = true;
+                if (Character.isUpperCase(currentChar)) {
+                    restIsLowerCase = false;
+                } else {
+                    hasALowerCase = true;
+                }
             }
+        }
+
+        if (!isAlpha) {
+            return "0";
         }
 
         if (firstIsLowerCase && restIsLowerCase) {
@@ -55,8 +60,7 @@ public class PerformanceComparator {
             return "AA";
         }
         StringBuilder builder = new StringBuilder();
-        builder.append(firstIsLowerCase ? '0' : '1');
-        word.substring(1).chars().forEach(
+        word.chars().forEach(
                 character -> builder.append(Character.isUpperCase(character) ? '1' : '0'));
         return builder.toString();
     }

@@ -21,7 +21,7 @@ def crear_pdf(titulo, texto):
 
     # Texto del capítulo justificado
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, texto, align='J')
+    pdf.multi_cell(0, 8, texto, align='J')
 
     # Guardar el PDF
     pdf.output(nombre_archivo)

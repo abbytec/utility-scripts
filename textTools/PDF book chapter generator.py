@@ -24,11 +24,13 @@ class PDFChapterGenerator:
         self.pdf.output(nombre_archivo)
 
     def add_texto(self, texto):
+        # Reemplazar guiones largos y otros caracteres especiales
+        texto = texto.replace("—", "-")
         # Dividir el texto en párrafos
         parrafos = texto.split('\n')
         for parrafo in parrafos:
             self.pdf.multi_cell(0, 8, parrafo, align='J')
-            self.pdf.ln(4)  # Espacio entre párrafos
+            self.pdf.ln(2)  # Espacio entre párrafos
 
 """ Ejemplo de uso del módulo
 if __name__ == "__main__":

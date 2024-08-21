@@ -1,0 +1,12 @@
+```ansi
+[31mTexto en rojo[0m
+[32mTexto en verde[0m
+[33mTexto en amarillo[0m
+[34mTexto en azul[0m
+[35mTexto en magenta[0m
+[36mTexto en cian[0m
+[37mTexto en blanco[0m
+[30mTexto en gris[0m
+[0mTexto normal
+```
+

@@ -31,7 +31,7 @@ while [ $SECONDS -lt $END ]; do
         USER=$(echo $line | awk '{print $2}')
         CPU=$(echo $line | awk '{print $9}')
         MEM=$(echo $line | awk '{print $10}')
-        PROCESS_NAME=$(echo "$PROCESS_LIST" | grep " $PID " | awk '{print $9}')
+        PROCESS_NAME=$(echo "$PROCESS_LIST" | grep -F " $PID " | awk '{print $9}')
         echo "$TIMESTAMP,$PID,$USER,$CPU,$MEM,$PROCESS_NAME" >> $OUTPUT_FILE
     done
 

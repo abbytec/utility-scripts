@@ -1,2 +1,3 @@
 /.venv
 android/statistical-latency-checker/process_stats.csv
+__pycache__

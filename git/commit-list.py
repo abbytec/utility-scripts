@@ -137,49 +137,74 @@ def main():
             reader = csv.reader(f)
             
             for i, row in enumerate(reader):
-                # CAMBIO: ahora se esperan 3 columnas
-                if len(row) < 3:
-                    print(f"Advertencia: Fila {i+1} ignorada (datos incompletos, se esperan 3 columnas: url, historia, qa_url)")
+                # CAMBIO: Lógica de parseo de fila variable
+                
+                if len(row) < 3: # Mínimo 1 PR, 1 historia, 1 QA URL (incluso vacía)
+                    print(f"Advertencia: Fila {i+1} ignorada (datos incompletos, se esperan al menos 3 columnas)")
                     continue
                     
-                pr_url = row[0].strip()
-                story_code = row[1].strip()
-                qa_url = row[2].strip() # NUEVA COLUMNA
+                pr_urls = []
+                story_code = None
+                qa_url = "" # Default a vacío
+
+                for j, item_raw in enumerate(row):
+                    item = item_raw.strip()
+                    if not item: continue # Ignorar campos vacíos si no son el QA URL
+                    
+                    if story_code is None:
+                        # Si aún no encontramos la historia, revisamos si es URL
+                        # Usamos 'startswith' como un simple detector de URL
+                        if item.startswith('http'):
+                            pr_urls.append(item)
+                        else:
+                            # Es la primera vez que vemos un no-URL, es la historia
+                            story_code = item
+                            # El siguiente item ES el QA URL, incluso si está vacío
+                            if j + 1 < len(row):
+                                qa_url = row[j+1].strip()
+                            # Encontramos todo, salimos del bucle de items
+                            break 
+                    # Si story_code ya está seteado, el 'break' nos saca.
                 
-                if not pr_url or not story_code: # qa_url puede estar vacía
-                    print(f"Advertencia: Fila {i+1} ignorada (url o historia vacíos)")
+                # --- Fin del bucle de items ---
+
+                # Validar si encontramos lo necesario
+                if not pr_urls or not story_code:
+                    print(f"Advertencia: Fila {i+1} ignorada (no se pudo encontrar PRs o código de historia)")
                     continue
+
+                # Ahora, procesamos todos los PRs para esta fila
+                print(f"  Procesando Fila {i+1} (Historia: {story_code}, {len(pr_urls)} PRs)")
                 
-                print(f"  Procesando PR: {pr_url} ({story_code})")
-                
-                try:
-                    # Esta es la función clave que llama a las APIs
-                    # Devuelve una estructura de datos estándar
-                    details = get_pr_details(pr_url)
-                    
-                    # Identificamos los módulos afectados por este PR
-                    repo_name = details['repo_name']
-                    modules = identify_modules(repo_name, details['files'])
-                    
-                    # Agregamos los datos a nuestros diccionarios
-                    for module in modules:
-                        # Añadimos el código de historia y la URL de QA al set
-                        modules_stories[module].add((story_code, qa_url)) # CAMBIO: guardar tupla
+                for pr_url in pr_urls:
+                    print(f"    -> Procesando PR: {pr_url}")
+                    try:
+                        # Esta es la función clave que llama a las APIs
+                        # Devuelve una estructura de datos estándar
+                        details = get_pr_details(pr_url)
                         
-                        # Añadimos todos los commits del PR a la lista de este módulo
-                        for commit in details['commits']:
-                            # Formateamos el string del commit aquí
-                            sha_short = commit['sha'][:7]
-                            # Limpiamos el mensaje (quitamos saltos de línea)
-                            message_first_line = commit['message'].split('\n')[0].strip()
-                            commit_str = f" - [{sha_short}] {message_first_line}"
+                        # Identificamos los módulos afectados por este PR
+                        repo_name = details['repo_name']
+                        modules = identify_modules(repo_name, details['files'])
+                        
+                        # Agregamos los datos (todos asociados a la misma historia/qa)
+                        for module in modules:
+                            modules_stories[module].add((story_code, qa_url))
                             
-                            # Añadimos el string formateado
-                            modules_commits[module].append(commit_str)
-                            
-                except Exception as e:
-                    print(f"  ERROR al procesar {pr_url}: {e}")
-                    # Continuamos con el siguiente PR
+                            # Añadimos todos los commits del PR a la lista de este módulo
+                            for commit in details['commits']:
+                                # Formateamos el string del commit aquí
+                                sha_short = commit['sha'][:7]
+                                # Limpiamos el mensaje (quitamos saltos de línea)
+                                message_first_line = commit['message'].split('\n')[0].strip()
+                                commit_str = f" - [{sha_short}] {message_first_line}"
+                                
+                                # Añadimos el string formateado
+                                modules_commits[module].append(commit_str)
+                                
+                    except Exception as e:
+                        print(f"    ERROR al procesar {pr_url}: {e}")
+                        # Continuamos con el siguiente PR de la lista
             
     except FileNotFoundError:
         print(f"Error: No se pudo encontrar el archivo: {csv_file_path}")
